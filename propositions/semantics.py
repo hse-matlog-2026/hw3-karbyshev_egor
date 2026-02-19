@@ -152,8 +152,6 @@ def synthesize_cnf(variables: Sequence[str], values: Iterable[bool]) -> Formula:
 
 def evaluate_inference(rule: InferenceRule, model: Model) -> bool:
     assert is_model(model)
-    # Task 4.2
 
 def is_sound_inference(rule: InferenceRule) -> bool:
-    # Task 4.3
     pass

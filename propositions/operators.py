@@ -74,50 +74,42 @@ def to_nand(formula: Formula) -> Formula:
 
 def to_implies_not(formula: Formula) -> Formula:
     if is_variable(formula.root):
-        return Formula(formula.root)
+        return formula
     if is_constant(formula.root):
         if formula.root == 'T':
             return Formula('->', Formula('p'), Formula('p'))
-        else:  # 'F'
-            return Formula('~', Formula('->', Formula('p'), Formula('p')))
-    if formula.root == '~' or formula.root == '->':
-        if is_unary(formula.root):
-            return Formula(formula.root, to_implies_not(formula.first))
         else:
-            return Formula(formula.root,
-                          to_implies_not(formula.first),
-                          to_implies_not(formula.second))
-    first = to_implies_not(formula.first)
-    second = to_implies_not(formula.second)
+            return Formula('~', Formula('->', Formula('p'), Formula('p')))
+    new_first = to_implies_not(formula.first)
+    new_second = to_implies_not(formula.second) if formula.second else None
+    if formula.root == '~':
+        return Formula('~', new_first)
+    if formula.root == '->':
+        return Formula('->', new_first, new_second)
     if formula.root == '&':
-        return Formula('~', Formula('->', first, Formula('~', second)))
+        return Formula('~', Formula('->', new_first, Formula('~', new_second)))
     if formula.root == '|':
-        return Formula('->', Formula('~', first), second)
+        return Formula('->', Formula('~', new_first), new_second)
     if formula.root == '+':
-        left = Formula('->', first, Formula('~', second))
-        right = Formula('->', second, Formula('~', first))
+        left = Formula('->', new_first, Formula('~', new_second))
+        right = Formula('->', Formula('~', new_first), new_second)
         return Formula('~', Formula('->', left, Formula('~', right)))
     if formula.root == '<->':
-        left = Formula('->', first, second)
-        right = Formula('->', second, first)
+        left = Formula('->', new_first, new_second)
+        right = Formula('->', new_second, new_first)
         return Formula('~', Formula('->', left, Formula('~', right)))
     if formula.root == '-&':
-        return Formula('->', first, Formula('~', second))
+        return Formula('->', new_first, Formula('~', new_second))
     if formula.root == '-|':
-        return Formula('~', Formula('->', Formula('~', first), second))
+        return Formula('~', Formula('->', Formula('~', new_first), new_second))
 
 def to_implies_false(formula: Formula) -> Formula:
-    # Сначала преобразуем в -> и ~
     imp_not = to_implies_not(formula)
-
-    def convert(expr):
-        if is_variable(expr.root):
-            return expr
-        if expr.root == 'F':
-            return expr
-        if expr.root == '~':
-            return Formula('->', convert(expr.first), Formula('F'))
-        if expr.root == '->':
-            return Formula('->', convert(expr.first), convert(expr.second))
-
-    return convert(imp_not)
+    if is_variable(imp_not.root):
+        return imp_not
+    if imp_not.root == 'F':
+        return imp_not
+    if imp_not.root == '~':
+        return Formula('->', to_implies_false(imp_not.first), Formula('F'))
+    if imp_not.root == '->':
+        return Formula('->', to_implies_false(imp_not.first), to_implies_false(imp_not.second))
