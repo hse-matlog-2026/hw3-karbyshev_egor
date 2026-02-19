@@ -80,28 +80,28 @@ def to_implies_not(formula: Formula) -> Formula:
             return Formula('->', Formula('p'), Formula('p'))
         else:
             return Formula('~', Formula('->', Formula('p'), Formula('p')))
-    new_first = to_implies_not(formula.first)
-    new_second = to_implies_not(formula.second) if formula.second else None
-    if formula.root == '~':
-        return Formula('~', new_first)
+    if is_unary(formula.root):
+        return Formula('~', to_implies_not(formula.first))
+    first = to_implies_not(formula.first)
+    second = to_implies_not(formula.second)
     if formula.root == '->':
-        return Formula('->', new_first, new_second)
+        return Formula('->', first, second)
     if formula.root == '&':
-        return Formula('~', Formula('->', new_first, Formula('~', new_second)))
+        return Formula('~', Formula('->', first, Formula('~', second)))
     if formula.root == '|':
-        return Formula('->', Formula('~', new_first), new_second)
+        return Formula('->', Formula('~', first), second)
     if formula.root == '+':
-        left = Formula('->', new_first, Formula('~', new_second))
-        right = Formula('->', Formula('~', new_first), new_second)
+        left = Formula('->', first, Formula('~', second))
+        right = Formula('->', second, Formula('~', first))
         return Formula('~', Formula('->', left, Formula('~', right)))
     if formula.root == '<->':
-        left = Formula('->', new_first, new_second)
-        right = Formula('->', new_second, new_first)
+        left = Formula('->', first, second)
+        right = Formula('->', second, first)
         return Formula('~', Formula('->', left, Formula('~', right)))
     if formula.root == '-&':
-        return Formula('->', new_first, Formula('~', new_second))
+        return Formula('->', first, Formula('~', second))
     if formula.root == '-|':
-        return Formula('~', Formula('->', Formula('~', new_first), new_second))
+        return Formula('~', Formula('->', Formula('~', first), second))
 
 def to_implies_false(formula: Formula) -> Formula:
     imp_not = to_implies_not(formula)
@@ -113,3 +113,4 @@ def to_implies_false(formula: Formula) -> Formula:
         return Formula('->', to_implies_false(imp_not.first), Formula('F'))
     if imp_not.root == '->':
         return Formula('->', to_implies_false(imp_not.first), to_implies_false(imp_not.second))
+    return imp_not
